@@ -8,6 +8,11 @@ import entidades.Serie;
 import entidades.Ator;
 import entidades.Episodio;
 
+import entidades.ElementoLista;
+
+import estruturas.SistemaBusca;
+import estruturas.ListaInvertida;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -17,6 +22,7 @@ public class MenuSeries
     ArquivoSerie arqSeries;
     ArquivoEpisodio arqEpisodio;
     ArquivoAtor arqAtor;
+    SistemaBusca sistemaBusca;
     private static Scanner console = new Scanner(System.in);
 
     public MenuSeries() throws Exception 
@@ -24,6 +30,10 @@ public class MenuSeries
         arqSeries = new ArquivoSerie();
         arqAtor = new ArquivoAtor();
         arqEpisodio = new ArquivoEpisodio();
+        sistemaBusca = new SistemaBusca(new ListaInvertida(
+            4,
+            ".\\dados\\series\\dicionario.listainv.db",
+            ".\\dados\\series\\blocos.listainv.db"));
     }
 
     public void menu() 
@@ -43,6 +53,7 @@ public class MenuSeries
             System.out.println("5) Atores associados");
             System.out.println("6) Associar a Ator");
             System.out.println("7) Remover ator associado");
+            System.out.println("8) Pesquisar (Lista Invertida)");
             System.out.println("0) Voltar");
 
             System.out.print("\nOpçao: ");
@@ -77,6 +88,9 @@ public class MenuSeries
                     break;
                 case 7:
                     removerAtorAssociado();
+                    break;
+                case 8:
+                    buscarListaInvertida();
                     break;
                 case 0:
                     break;
@@ -140,8 +154,10 @@ public class MenuSeries
             try 
             {
                 Serie c = new Serie(nome, ano, sinopse, streaming);
-                arqSeries.create(c);
+                int id = arqSeries.create(c);
                 System.out.println("Serie incluída com sucesso.");
+                sistemaBusca.cadastrar(nome, id);
+                System.out.println("Cadastro na lista invertida realizado com sucesso");
             } 
             catch(Exception e) 
             {
@@ -607,6 +623,64 @@ public class MenuSeries
             System.out.println("Erro do sistema. Nao foi possível realizar a ação.");
             e.printStackTrace();
         }
+    }
+
+    public void buscarListaInvertida() {
+        System.out.println("\nBusca de Serie por termos");
+        String busca;
+
+        System.out.print("\nTermos para busca: ");
+        busca = console.nextLine();  // Lê os termos digitados
+
+        if (busca.isEmpty()) {
+            return;
+        }
+
+        try {
+            ElementoLista[] lista = sistemaBusca.listaIDF(busca);
+            boolean organizado = false;
+            
+            // Organizar array pela frequencia
+            while (!organizado) {
+                organizado = true;
+                for (int x = 0; x < lista.length-1; x++) {
+                    if (lista[x].getFrequencia() < lista[x+1].getFrequencia()) {
+                        ElementoLista temp = lista[x];
+                        lista[x] = lista[x+1];
+                        lista[x+1] = temp;
+                        organizado = false;
+                    }
+                }
+            }
+
+            // Obter nome das séries resultantes
+            String[] listaNome = new String[lista.length];
+            for (int x = 0; x < lista.length; x++) {
+                Serie serie = arqSeries.read(lista[x].getId());
+                if (serie != null) {
+                    listaNome[x] = serie.getNome();
+                }
+            }
+
+            // Exibir resultados
+            System.out.println("Resultados da busca:");
+            // Mostrar frequencias e ids (para teste)
+            for (int x = 0; x < lista.length; x++) {
+                System.out.print(lista[x].getId() + " - ");
+                System.out.println(lista[x].getFrequencia());
+            }
+            for (int x = 0; x < listaNome.length; x++) {
+                System.out.print(lista[x].getId() + " - ");
+                System.out.println(listaNome[x]);
+
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        
+
     }
 
 }
