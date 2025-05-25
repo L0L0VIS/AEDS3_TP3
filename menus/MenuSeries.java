@@ -157,7 +157,7 @@ public class MenuSeries
                 int id = arqSeries.create(c);
                 System.out.println("Serie incluída com sucesso.");
                 sistemaBusca.cadastrar(nome, id);
-                System.out.println("Cadastro na lista invertida realizado com sucesso");
+                //System.out.println("Cadastro na lista invertida realizado com sucesso");
             } 
             catch(Exception e) 
             {
@@ -665,10 +665,10 @@ public class MenuSeries
             // Exibir resultados
             System.out.println("Resultados da busca:");
             // Mostrar frequencias e ids (para teste)
-            for (int x = 0; x < lista.length; x++) {
-                System.out.print(lista[x].getId() + " - ");
-                System.out.println(lista[x].getFrequencia());
-            }
+            //for (int x = 0; x < lista.length; x++) {
+            //    System.out.print(lista[x].getId() + " - ");
+            //    System.out.println(lista[x].getFrequencia());
+            //}
             for (int x = 0; x < listaNome.length; x++) {
                 System.out.print(lista[x].getId() + " - ");
                 System.out.println(listaNome[x]);
