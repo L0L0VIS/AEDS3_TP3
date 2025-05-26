@@ -292,7 +292,7 @@ public class MenuEpisodio {
     }
 
     public void buscarListaInvertida() {
-        System.out.println("\nBusca de Episodio por termos");
+        System.out.println("\nBusca de Episódio por termos");
         String busca;
 
         System.out.print("\nTermos para busca: ");
@@ -303,50 +303,44 @@ public class MenuEpisodio {
         }
 
         try {
-            ElementoLista[] lista = sistemaBusca.listaIDF(busca);
+            ElementoLista[] lista = sistemaBusca.listaIDF(busca);  // Chamada ao índice invertido
             boolean organizado = false;
-            
-            // Organizar array pela frequencia
+
+            // Organizar array pela frequência (Bubble Sort)
             while (!organizado) {
                 organizado = true;
-                for (int x = 0; x < lista.length-1; x++) {
-                    if (lista[x].getFrequencia() < lista[x+1].getFrequencia()) {
+                for (int x = 0; x < lista.length - 1; x++) {
+                    if (lista[x].getFrequencia() < lista[x + 1].getFrequencia()) {
                         ElementoLista temp = lista[x];
-                        lista[x] = lista[x+1];
-                        lista[x+1] = temp;
+                        lista[x] = lista[x + 1];
+                        lista[x + 1] = temp;
                         organizado = false;
                     }
                 }
             }
 
-            // Obter nome dos episódios resultantes
+            // Obter título dos episódios resultantes
             String[] listaNome = new String[lista.length];
             for (int x = 0; x < lista.length; x++) {
-                Episodio episodio = arqEpisodio.read(lista[x].getId());
-                if (episodio != null) {
-                    listaNome[x] = episodio.getTitulo();
+                Episodio ep = arqEpisodio.read(lista[x].getId());  // Recupera episódio pelo ID
+                if (ep != null) {
+                    listaNome[x] = ep.getTitulo();  // Supondo que Episodio tenha getTitulo()
+                } else {
+                    listaNome[x] = "(registro não encontrado)";
                 }
             }
 
             // Exibir resultados
             System.out.println("Resultados da busca:");
-            // Mostrar frequencias e ids (para teste)
-            //for (int x = 0; x < lista.length; x++) {
-            //    System.out.print(lista[x].getId() + " - ");
-            //    System.out.println(lista[x].getFrequencia());
-            //}
             for (int x = 0; x < listaNome.length; x++) {
                 System.out.print(lista[x].getId() + " - ");
                 System.out.println(listaNome[x]);
-
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
-
 
 
 }
