@@ -1,346 +1,482 @@
 package menus;
 
-import arquivos.ArquivoEpisodio;
+import arquivos.ArquivoAtor;
 import arquivos.ArquivoSerie;
-import entidades.*;
+
+import entidades.Ator;
+import entidades.ElementoLista;
+import entidades.Serie;
 
 import estruturas.SistemaBusca;
 import estruturas.ListaInvertida;
 
 import java.util.Scanner;
-import java.time.LocalDate;
-import java.time.format.*;
 
-public class MenuEpisodio {
-
-    int id_serie = -1;
-    String nome_serie = "";
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    ArquivoEpisodio arqEpisodio;
-    ArquivoSerie arqSeries;
-    SistemaBusca sistemaBusca;
+public class MenuAtor {
+    
+    private ArquivoAtor arqAtor;
+    private ArquivoSerie arqSerie;
     private static Scanner console = new Scanner(System.in);
+    private SistemaBusca sistemaBusca;
 
-    public MenuEpisodio() throws Exception {
-        arqEpisodio = new ArquivoEpisodio();
-        arqSeries = new ArquivoSerie();
+    public MenuAtor() throws Exception {
+        arqAtor = new ArquivoAtor();
+        arqSerie = new ArquivoSerie();
         sistemaBusca = new SistemaBusca(new ListaInvertida(
             4,
-            ".\\dados\\episodios\\dicionario.listainv.db",
-            ".\\dados\\episodios\\blocos.listainv.db"));
+            ".\\dados\\atores\\dicionario.listainv.db",
+            ".\\dados\\atores\\blocos.listainv.db"));;
     }
 
-    public void definir_serie() throws Exception {
-        boolean serie_defined = false;
-
-        while (!serie_defined) {
-            System.out.print("Digite o nome da serie a ser acessada os episódios: ");
-            nome_serie = console.nextLine();
-
-            while (nome_serie.isEmpty()) {
-                System.out.println("Erro de entrada: Digite novamente");
-                nome_serie = console.nextLine();
-            }
-
-            Serie serie = arqSeries.read(nome_serie);
-            if (serie != null) {
-                id_serie = serie.getId();
-                serie_defined = true;
-            } else {
-                System.out.println("Serie nao encontrada.");
-            }
-        }
-    }
-
-    public void menu() throws Exception {
-        if (id_serie == -1) {
-            definir_serie();
-        }
-
+    public void menu() {
         int opcao;
+
         do {
             System.out.println("\nPUCFlix 2.0");
             System.out.println("-----------");
-            System.out.print("> Início > Episodio (");
-            System.out.print(nome_serie);
-            System.out.println(")");
+            System.out.println("> Início > Atores");
             System.out.println("\n1) Incluir");
             System.out.println("2) Buscar");
             System.out.println("3) Alterar");
             System.out.println("4) Excluir");
-            System.out.println("5) Redefinir Série");
-            System.out.println("6) Pesquisa (Lista Invertida)");
+            System.out.println("5) Séries Associadas");
+            System.out.println("6) Associar a Série");
+            System.out.println("7) Remover série associada");
+            System.out.println("8) Pesquisar (Lista Invertida)");
             System.out.println("0) Voltar");
 
             System.out.print("\nOpçao: ");
             try {
-                opcao = Integer.valueOf(console.nextLine());
+                opcao = Integer.parseInt(console.nextLine());
             } catch (NumberFormatException e) {
                 opcao = -1;
             }
 
             switch (opcao) {
                 case 1:
-                    incluirEpisodio();
+                    incluirAtor();
                     break;
                 case 2:
-                    buscarEpisodio();
+                    buscarAtor();
                     break;
                 case 3:
-                    alterarEpisodio();
+                    alterarAtor();
                     break;
                 case 4:
-                    excluirEpisodio();
+                    excluirAtor();
                     break;
                 case 5:
-                    definir_serie();
+                    listarSeriesAssociadas();
                     break;
                 case 6:
+                    associarAtorASerie();
+                    break;
+                case 7:
+                    removerSerieAssociada();
+                    break;
+                case 8:
                     buscarListaInvertida();
                     break;
                 case 0:
                     break;
                 default:
                     System.out.println("Opçao inválida!");
-                    break;
             }
 
         } while (opcao != 0);
     }
-    
-    public void incluirEpisodio() {
-        System.out.println("\nInclusao de Episodio");
-        String titulo;
-        int duracao;
-        String dataLancamento;
-        int temporada;
-        int numero;
-        
-        System.out.print("\nTítulo: ");
-        titulo = console.nextLine();
-        if (titulo.isEmpty()) return;
-        
-        System.out.print("Número do episódio: ");
-        while (!console.hasNextInt()) {
-            console.next();
-            System.out.print("Digite um número válido: ");
-        }
-        numero = console.nextInt();
-        console.nextLine();
-        
-        System.out.print("Temporada: ");
-        while (!console.hasNextInt()) {
-            console.next();
-            System.out.print("Digite um número válido: ");
-        }
-        temporada = console.nextInt();
-        console.nextLine();
-        
-        System.out.print("Data de lançamento (dd/MM/yyyy): ");
-        dataLancamento = console.nextLine();
-        LocalDate dataLocal;
-        try {
-            dataLocal = LocalDate.parse(dataLancamento, formatter);
-        } catch (DateTimeParseException e) {
-            System.out.println("Data inválida. Episódio nao cadastrado.");
-            return;
-        }
-        
-        System.out.print("Duraçao (minutos): ");
-        while (!console.hasNextInt()) {
-            console.next();
-            System.out.print("Digite um número válido: ");
-        }
-        duracao = console.nextInt();
-        console.nextLine();
-        
-        System.out.print("\nConfirma a inclusao do Episódio? (S/N): ");
-        char resp = console.next().charAt(0);
-        console.nextLine();
-        
+
+    private void incluirAtor() {
+        System.out.println("\nInclusao de Ator");
+        String nome;
+
+        do {
+            System.out.print("\nNome (vazio para cancelar): ");
+            nome = console.nextLine();
+            if (nome.isEmpty()) {
+                return;
+            }
+        } while (nome.length() == 0);
+
+        System.out.print("\nConfirma a inclusao do Ator? (S/N) ");
+        char resp = console.nextLine().charAt(0);
+
         if (resp == 'S' || resp == 's') {
             try {
-                Episodio ep = new Episodio(id_serie, titulo, temporada, numero, dataLancamento, duracao);
-                int id = arqEpisodio.create(ep);
-                System.out.println("Episódio incluído com sucesso.");
-                sistemaBusca.cadastrar(titulo, id);
+                Ator novoAtor = new Ator(nome);
+                int id = arqAtor.create(novoAtor);
+                System.out.println("Ator incluído com sucesso.");
+                sistemaBusca.cadastrar(nome, id);
                 //System.out.println("Cadastro na lista invertida realizado com sucesso.");
             } catch (Exception e) {
-                System.out.println("Erro do sistema. Nao foi possível incluir o episódio!");
+                System.out.println("Erro do sistema. Nao foi possível incluir o ator!");
                 e.printStackTrace();
             }
         }
     }
-    
-    public void buscarEpisodio() {
-        System.out.println("\nBusca de Episodio");
-        System.out.print("\nNome do Episódio: ");
-        String titulo = console.nextLine();
-        
-        if (titulo.isEmpty()) return;
-        
-        try {
-            Episodio episodio = arqEpisodio.read(id_serie, titulo);
-            if (episodio != null) {
-                mostraEpisodio(episodio);
-            } else {
-                System.out.println("Episódio nao encontrado.");
-            }
-        } catch (Exception e) {
-            System.out.println("Erro do sistema. Nao foi possível buscar o Episódio!");
-            e.printStackTrace();
-        }
-    }
 
-    public void alterarEpisodio() {
-        System.out.println("\nAlteraçao de Episodio");
+    private void buscarAtor() {
+        System.out.println("\nBusca de Ator");
+        String nome;
 
-        System.out.print("\nNome: ");
-        String nome = console.nextLine();
+        System.out.print("\nNome do Ator: ");
+        nome = console.nextLine();
 
-        if (nome.isEmpty()) return;
-
-        try {
-            Episodio episodio = arqEpisodio.read(id_serie, nome);
-            if (episodio != null) {
-                System.out.println("Episodio encontrado:");
-                mostraEpisodio(episodio);
-
-                System.out.print("\nNovo nome (deixe em branco para manter o anterior): ");
-                String novoNome = console.nextLine();
-                if (!novoNome.isEmpty()) episodio.setTitulo(novoNome);
-
-                System.out.print("Nova Duraçao (deixe em branco para manter a anterior): ");
-                String novaDuracao = console.nextLine();
-                if (!novaDuracao.isEmpty()) episodio.setDuracao(Short.parseShort(novaDuracao));
-
-                System.out.print("Nova Temporada (deixe em branco para manter a anterior): ");
-                String novaTemporada = console.nextLine();
-                if (!novaTemporada.isEmpty()) episodio.setTemporada(Short.parseShort(novaTemporada));
-
-                System.out.print("Nova data de lançamento (dd/mm/yyyy): ");
-                String novaData = console.nextLine();
-                if (!novaData.isEmpty()) {
-                    try {
-                        episodio.setDataLancamento(novaData);
-                    } catch (Exception e) {
-                        System.out.println("Data inválida. Valor mantido.");
-                    }
-                }
-
-                System.out.print("\nConfirma as alteraçoes? (S/N): ");
-                char resp = console.next().charAt(0);
-                console.nextLine(); // limpar buffer
-                if (resp == 'S' || resp == 's') {
-                    boolean alterado = arqEpisodio.update(episodio);
-                    System.out.println(alterado ? "Episodio alterado com sucesso." : "Erro ao alterar o Episodio.");
-                } else {
-                    System.out.println("Alteraçoes canceladas.");
-                }
-            } else {
-                System.out.println("Episodio nao encontrado.");
-            }
-        } catch (Exception e) {
-            System.out.println("Erro do sistema. Nao foi possível alterar o Episodio!");
-            e.printStackTrace();
-        }
-    }
-
-    public void excluirEpisodio() {
-        System.out.println("\nExclusao de Episodio");
-        System.out.print("\nTítulo (Deixar em branco para cancelar): ");
-        String titulo = console.nextLine();
-        
-        if (titulo.isEmpty()) return;
-
-        try {
-            Episodio episodio = arqEpisodio.read(id_serie, titulo);
-            if (episodio != null) {
-                System.out.println("Episódio encontrado:");
-                mostraEpisodio(episodio);
-
-                System.out.print("\nConfirma a exclusao do Episódio? (S/N): ");
-                char resp = console.next().charAt(0);
-                console.nextLine();
-
-                if (resp == 'S' || resp == 's') {
-                    boolean excluido = arqEpisodio.delete(episodio.getId());
-                    System.out.println(excluido ? "Episódio excluído com sucesso." : "Erro ao excluir o Episódio.");
-                } else {
-                    System.out.println("Exclusao cancelada.");
-                }
-            } else {
-                System.out.println("Episódio nao encontrado.");
-            }
-        } catch (Exception e) {
-            System.out.println("Erro do sistema. Nao foi possível excluir o Episódio!");
-            e.printStackTrace();
-        }
-    }
-
-    public void mostraEpisodio(Episodio episodio) {
-        if (episodio != null) {
-            System.out.println("\nDetalhes do Episódio:");
-            System.out.println("----------------------");
-            System.out.printf("Título.............: %s%n", episodio.getTitulo());
-            System.out.printf("Temporada..........: %d%n", episodio.getTemporada());
-            System.out.printf("Número.............: %d%n", episodio.getNumero());
-            System.out.printf("Data de lançamento.: %s%n", episodio.getDataLancamento());
-            System.out.printf("Duraçao............: %d min%n", episodio.getDuracao());
-            System.out.println("----------------------");
-        }
-    }
-
-    public void buscarListaInvertida() {
-        System.out.println("\nBusca de Episódio por termos");
-        String busca;
-
-        System.out.print("\nTermos para busca: ");
-        busca = console.nextLine();  // Lê os termos digitados
-
-        if (busca.isEmpty()) {
+        if (nome.isEmpty()) {
             return;
         }
 
         try {
-            ElementoLista[] lista = sistemaBusca.listaIDF(busca);  // Chamada ao índice invertido
-            boolean organizado = false;
-
-            // Organizar array pela frequência (Bubble Sort)
-            while (!organizado) {
-                organizado = true;
-                for (int x = 0; x < lista.length - 1; x++) {
-                    if (lista[x].getFrequencia() < lista[x + 1].getFrequencia()) {
-                        ElementoLista temp = lista[x];
-                        lista[x] = lista[x + 1];
-                        lista[x + 1] = temp;
-                        organizado = false;
-                    }
-                }
+            Ator ator = arqAtor.read(nome);
+            if (ator != null) {
+                mostraAtor(ator);
+            } else {
+                System.out.println("Ator nao encontrado.");
             }
-
-            // Obter título dos episódios resultantes
-            String[] listaNome = new String[lista.length];
-            for (int x = 0; x < lista.length; x++) {
-                Episodio ep = arqEpisodio.read(lista[x].getId());  // Recupera episódio pelo ID
-                if (ep != null) {
-                    listaNome[x] = ep.getTitulo();  // Supondo que Episodio tenha getTitulo()
-                } else {
-                    listaNome[x] = "(registro não encontrado)";
-                }
-            }
-
-            // Exibir resultados
-            System.out.println("Resultados da busca:");
-            for (int x = 0; x < listaNome.length; x++) {
-                System.out.print(lista[x].getId() + " - ");
-                System.out.println(listaNome[x]);
-            }
-
         } catch (Exception e) {
+            System.out.println("Erro do sistema. Nao foi possível buscar o ator!");
             e.printStackTrace();
         }
     }
+
+    private void alterarAtor() {
+        System.out.println("\nAlteraçao de Ator");
+        String nome;
+
+        System.out.print("\nNome do Ator: ");
+        nome = console.nextLine();
+
+        if (nome.isEmpty()) {
+            return;
+        }
+
+        try {
+            Ator ator = arqAtor.read(nome);
+
+            if (ator != null) {
+                System.out.println("Ator encontrado:");
+                mostraAtor(ator);
+
+                System.out.print("\nNovo nome (deixe vazio para manter o atual): ");
+                String novoNome = console.nextLine();
+
+                if (!novoNome.isEmpty()) {
+                    ator.setNome(novoNome);
+                }
+
+                System.out.print("\nConfirma as alterações? (S/N) ");
+                char resp = console.nextLine().charAt(0);
+
+                if (resp == 'S' || resp == 's') {
+                    boolean alterado = arqAtor.update(ator);
+                    if (alterado) {
+                        System.out.println("Ator alterado com sucesso.");
+                    } else {
+                        System.out.println("Erro ao alterar o ator.");
+                    }
+                } else {
+                    System.out.println("Alteraçao cancelada.");
+                }
+            } else {
+                System.out.println("Ator nao encontrado.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro do sistema. Nao foi possível alterar o ator!");
+            e.printStackTrace();
+        }
+    }
+
+    private void excluirAtor() {
+        System.out.println("\nExclusao de Ator");
+        String nome;
+
+        System.out.print("\nNome do Ator (vazio para cancelar): ");
+        nome = console.nextLine();
+
+        if (nome.isEmpty()) {
+            return;
+        }
+
+        try {
+            Ator ator = arqAtor.read(nome);
+
+            if (ator != null) {
+                System.out.println("Ator encontrado:");
+                mostraAtor(ator);
+
+                System.out.print("\nConfirma a exclusao do ator? (S/N) ");
+                char resp = console.nextLine().charAt(0);
+
+                if (resp == 'S' || resp == 's') {
+
+                    // Confirmar se há associações com séries
+                    int [] lista_id_series = arqAtor.getSeries(ator.getId());
+                    if (lista_id_series.length > 0) {
+                        System.out.println("Ator associado a série(s). Exclusao nao permitida.");
+                    }
+                    else {
+                        boolean excluido = arqAtor.delete(nome);
+                        if (excluido) {
+                            System.out.println("Ator excluído com sucesso.");
+                        } else {
+                            System.out.println("Erro ao excluir o ator.");
+                        }
+
+                    }
+                } else {
+                    System.out.println("Exclusao cancelada.");
+                }
+            } else {
+                System.out.println("Ator nao encontrado.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro do sistema. Nao foi possível excluir o ator!");
+            e.printStackTrace();
+        }
+    }
+
+    private void mostraAtor(Ator ator) {
+        if (ator != null) {
+            System.out.println("\nDetalhes do Ator:");
+            System.out.println("----------------------");
+            System.out.printf("ID.........: %d%n", ator.getId());
+            System.out.printf("Nome.......: %s%n", ator.getNome());
+            System.out.println("----------------------");
+        }
+    }
+    public void mostraSerie(Serie Serie) {
+        if (Serie != null) {
+            System.out.println("\nDetalhes do Serie:");
+            System.out.println("----------------------");
+            System.out.printf("Nome......: %s%n",           Serie.getNome());
+            System.out.printf("Sinopse.......: %s%n",       Serie.getSinopse());
+            System.out.printf("Ano de lançamento: %s%n",    Serie.getAno());
+            System.out.printf("Streaming...: %s%n",         Serie.getStreaming());
+            System.out.println("----------------------");
+        }
+    }
+
+    // Métodos relacionados a relação Ator-Série
+    private void associarAtorASerie() {
+        System.out.println("\nAssociar Ator a Série");
+        String nome;
+
+        // Obter nome do ator
+        System.out.print("\nNome do Ator: ");
+        nome = console.nextLine();
+
+        if (nome.isEmpty()) {
+            return;
+        }
+
+        try {
+            Ator ator = arqAtor.read(nome);
+            if (ator != null) {
+                mostraAtor(ator);
+
+                // Obter nome da série
+                System.out.print("\nNome da Série:");
+                nome = console.nextLine();
+
+                if (nome.isEmpty()) {
+                    return;
+                }
+
+                
+                Serie serie = arqSerie.read(nome);
+                if (serie != null) {
+                    mostraSerie(serie);
+
+                    // Confirmar associação ator-série
+                    System.out.print("\nAssociar Ator a Série? (S/N) ");
+                    char resp = console.nextLine().charAt(0);
+
+                    if (resp == 'S' || resp == 's') {
+                        // Tentar inclusão da associação na árvore B+ Ator_Série
+                        // (o próprio método chamará a associação na árvore B+ Série_Ator)
+                        boolean associado = arqAtor.associar_serie(ator.getId(), serie.getId());
+                        if (associado) {
+                            System.out.println("Ator associado a série com sucesso.");
+                        }
+                        // Reportar falha da operação
+                        else {
+                            System.out.println("Erro ao associar ator e série.");
+                        }
+                    } else {
+                        System.out.println("Associaçao cancelada.");
+                    }
+
+
+                } else {
+                    System.out.println("Série nao encontrada.");
+                }
+                
+
+            } else {
+                System.out.println("Ator nao encontrado.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro do sistema.");
+            e.printStackTrace();
+        }
+    }
+
+    public void listarSeriesAssociadas() {
+        System.out.println("\nListar Séries associadas a Ator");
+        String nome;
+
+        System.out.print("\nNome do Ator: ");
+        nome = console.nextLine();
+
+        if (nome.isEmpty()) {
+            return;
+        }
+
+        try {
+            Ator ator = arqAtor.read(nome);
+            if (ator != null) {
+                int [] lista_id_series = arqAtor.getSeries(ator.getId());
+
+                // Teste para ver lista de ids coletados
+                for (int x = 0; x < lista_id_series.length; x++) {
+                    System.out.println(lista_id_series[x]);
+                }
+
+                // Conferir se há associações para listar
+                if (lista_id_series.length <= 0) {
+                    System.out.println("Nenhuma série associada ao ator.");
+                    return;
+                } else {
+
+                    Serie serie;
+                    System.out.println("-------------");
+                    for (int x = 0; x < lista_id_series.length; x++) {
+                        serie = arqSerie.read(lista_id_series[x]);
+                        if (serie != null) {
+                            System.out.println(serie.getNome() + " - " + serie.getAno());
+                        }
+                    }
+                    System.out.println("-------------");
+
+                }
+
+            } else {
+                System.out.println("Ator nao encontrado.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro do sistema. Nao foi possível realizar a ação.");
+            e.printStackTrace();
+        }
+    }
+
+    public void removerSerieAssociada() {
+        System.out.println("\nRemover Série associada a Ator");
+        String nome;
+
+        System.out.print("\nNome do Ator: ");
+        nome = console.nextLine();
+
+        if (nome.isEmpty()) {
+            return;
+        }
+
+        try {
+            Ator ator = arqAtor.read(nome);
+            if (ator != null) {
+                int [] lista_id_series = arqAtor.getSeries(ator.getId());
+
+                // Conferir se há associações para remover
+                if (lista_id_series.length == 0) {
+                    System.out.println("Nenhuma série associada ao ator.");
+                    return;
+                } else {
+                    Serie serie;
+                    System.out.println("-------------");
+                    for (int x = 0; x < lista_id_series.length; x++) {
+                        serie = arqSerie.read(lista_id_series[x]);
+                        if (serie != null) {
+                            System.out.println(serie.getNome() + " - " + serie.getAno());
+                        }
+                    }
+                    System.out.println("-------------");
+    
+                    // Obter nome da série
+                    System.out.print("\nNome da Série a remover:");   
+                    nome = console.nextLine();
+    
+                    if (nome.isEmpty()) {
+                        return;
+                    }
+    
+                    serie = arqSerie.read(nome);
+                    boolean remocao = arqAtor.deletar_associao_serie(ator.getId(), serie.getId());
+                    if (remocao) {
+                        System.out.println("Associacao removida com sucesso.");
+                    } else {
+                        System.out.println("Erro ao remover associacao.");
+                    }
+                }
+
+            } else {
+                System.out.println("Ator nao encontrado.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro do sistema. Nao foi possível realizar a ação.");
+            e.printStackTrace();
+        }
+    }
+
+
+        public void buscarListaInvertida() {
+            System.out.println("\nBusca de Ator por termos");
+            String busca;
+
+            System.out.print("\nTermos para busca: ");
+            busca = console.nextLine();  // Lê os termos digitados
+
+            if (busca.isEmpty()) {
+                return;
+            }
+
+            try {
+                ElementoLista[] lista = sistemaBusca.listaIDF(busca);  // mesmo método do sistema de busca
+                boolean organizado = false;
+
+                // Organizar array pela frequência (Bubble Sort)
+                while (!organizado) {
+                    organizado = true;
+                    for (int x = 0; x < lista.length - 1; x++) {
+                        if (lista[x].getFrequencia() < lista[x + 1].getFrequencia()) {
+                            ElementoLista temp = lista[x];
+                            lista[x] = lista[x + 1];
+                            lista[x + 1] = temp;
+                            organizado = false;
+                        }
+                    }
+                }
+
+                // Obter nome dos atores resultantes
+                String[] listaNome = new String[lista.length];
+                for (int x = 0; x < lista.length; x++) {
+                    Ator ator = arqAtor.read(lista[x].getId());  // Recupera ator com base no ID
+                    if (ator != null) {
+                        listaNome[x] = ator.getNome();  // Supondo que Ator tenha getNome()
+                    } else {
+                        listaNome[x] = "(registro não encontrado)";
+                    }
+                }
+
+                // Exibir resultados
+                System.out.println("Resultados da busca:");
+                for (int x = 0; x < listaNome.length; x++) {
+                    System.out.print(lista[x].getId() + " - ");
+                    System.out.println(listaNome[x]);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
 
 }
